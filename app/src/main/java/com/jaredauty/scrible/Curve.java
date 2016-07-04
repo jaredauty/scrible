@@ -9,7 +9,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import com.jaredauty.scrible.curve.CurveResampler;
 
 import java.util.ArrayList;
 
@@ -79,5 +79,12 @@ public class Curve extends Drawable {
     }
     public void touch_up() {
         path.lineTo(mX, mY);
+        rebuildCurve();
+    }
+
+    // Rebuild the curve to reduce the amount of points required.
+    protected void rebuildCurve() {
+        CurveResampler resampler = new CurveResampler(points);
+        points = resampler.getOptimisedPoints(150.0f);
     }
 }
