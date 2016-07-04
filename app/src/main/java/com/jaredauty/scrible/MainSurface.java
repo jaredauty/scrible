@@ -1,5 +1,6 @@
 package com.jaredauty.scrible;
 
+import java.util.ArrayList;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
@@ -10,19 +11,22 @@ import android.graphics.Canvas;
 
 import com.jaredauty.scrible.Curve;
 
+
+
 /**
  * Created by Jared on 03/07/2016.
  */
 public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder surfaceHolder;
-    private Curve testCurve;
+    private Curve currentCurve;
+    private ArrayList<Curve> curves;
 
     public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
 
-        testCurve = new Curve();
+        curves = new ArrayList<Curve>();
     }
 
     protected void repaint() {
@@ -30,7 +34,11 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         try {
             c = surfaceHolder.lockCanvas();
             c.drawColor(Color.WHITE);
-            testCurve.draw(c);
+            // Draw curves
+            for(Curve curve: curves)
+            {
+                curve.draw(c);
+            }
         } finally {
             if (c != null) {
                 surfaceHolder.unlockCanvasAndPost(c);
@@ -55,15 +63,17 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         float y = event.getY();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                testCurve.touch_start(x, y);
+                currentCurve = new Curve();
+                curves.add(currentCurve);
+                currentCurve.touch_start(x, y);
                 repaint();
                 break;
             case MotionEvent.ACTION_MOVE:
-                testCurve.touch_move(x, y);
+                currentCurve.touch_move(x, y);
                 repaint();
                 break;
             case MotionEvent.ACTION_UP:
-                testCurve.touch_up();
+                currentCurve.touch_up();
                 repaint();
                 break;
         }

@@ -5,9 +5,13 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+
+import java.util.ArrayList;
 
 
 /**
@@ -16,18 +20,29 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
  */
 public class Curve extends Drawable {
 
-    protected Paint paint;
+    protected Paint curvePaint;
+    private Paint debugDotPaint;
     private Path path;
+    private boolean debug;
+    private ArrayList<PointF> points;
 
     public Curve() {
         super();
-        paint = new Paint();
-        paint.setColor(Color.BLUE);
-        paint.setAntiAlias(true);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(10.0f);
+        // Define paint for curve
+        curvePaint = new Paint();
+        curvePaint.setColor(Color.BLUE);
+        curvePaint.setAntiAlias(true);
+        curvePaint.setStyle(Paint.Style.STROKE);
+        curvePaint.setStrokeWidth(5.0f);
+
+        // Define paint for debug dots
+        debugDotPaint = new Paint();
+        debugDotPaint.setColor(Color.RED);
+        debugDotPaint.setAntiAlias(true);
 
         path = new Path();
+        debug = true;
+        points = new ArrayList<PointF>();
     }
     public void setAlpha(int i) {;}
     public int getAlpha() {return 255;}
@@ -35,7 +50,13 @@ public class Curve extends Drawable {
     public void setColorFilter(ColorFilter colorFilter) {;}
 
     public void draw(Canvas canvas) {
-        canvas.drawPath(path, paint);
+        canvas.drawPath(path, curvePaint);
+        if(debug) {
+            // Draw dots for all control points.
+            for(PointF point: points) {
+                canvas.drawCircle(point.x, point.y, 10.0f, debugDotPaint);
+            }
+        }
     }
 
     private float mX, mY;
@@ -53,6 +74,7 @@ public class Curve extends Drawable {
             path.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
             mX = x;
             mY = y;
+            points.add(new PointF(x, y));
         }
     }
     public void touch_up() {
