@@ -26,7 +26,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
 
-        curves = new ArrayList<Curve>();
+        clean();
     }
 
     protected void repaint() {
@@ -79,5 +79,10 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         }
         return true;
     }
+
+    public void clean() {
+        curves = new ArrayList<Curve>();
+    }
+
 
 }
