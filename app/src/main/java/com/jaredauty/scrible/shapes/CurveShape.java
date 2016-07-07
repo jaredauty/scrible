@@ -1,4 +1,4 @@
-package com.jaredauty.scrible;
+package com.jaredauty.scrible.shapes;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * Created by Jared on 04/07/2016.
  * Class for handling curves created by the user.
  */
-public class Curve extends Drawable {
+public class CurveShape extends Drawable {
 
     protected Paint curvePaint;
     private Paint debugDotPaint;
@@ -26,12 +26,12 @@ public class Curve extends Drawable {
     private boolean mDebug;
     private ArrayList<PointF> points;
 
-    public Curve(boolean debug) {
+    public CurveShape(boolean debug) {
         this();
         mDebug = debug;
     }
 
-    public Curve() {
+    public CurveShape() {
         super();
         // Define paint for curve
         curvePaint = new Paint();

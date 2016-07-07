@@ -3,30 +3,39 @@ package com.jaredauty.scrible;
 import java.util.ArrayList;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.graphics.Canvas;
 
-import com.jaredauty.scrible.Curve;
-
-
+import com.jaredauty.scrible.shapes.CurveShape;
+import com.jaredauty.scrible.shapes.GridShape;
 
 /**
  * Created by Jared on 03/07/2016.
  */
 public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder surfaceHolder;
-    private Curve currentCurve;
-    private ArrayList<Curve> curves;
+    private CurveShape currentCurve;
+    private ArrayList<CurveShape> curves;
     private boolean debug;
+    private int mWidth;
+    private int mHeight;
+    private GridShape mBackgroundGrid;
+    private Matrix mSceneMatrix;
 
     public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        mSceneMatrix = new Matrix();
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
 
+        mBackgroundGrid = new GridShape(50, 200, 200);
         clean();
     }
 
@@ -34,9 +43,9 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         Canvas c = null;
         try {
             c = surfaceHolder.lockCanvas();
-            c.drawColor(Color.WHITE);
+            drawBackground(c);
             // Draw curves
-            for(Curve curve: curves)
+            for(CurveShape curve: curves)
             {
                 curve.draw(c);
             }
@@ -56,7 +65,18 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        mBackgroundGrid.setWidth(w);
+        mBackgroundGrid.setHeight(h);
     }
+
+//    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+//        mWidth = w;
+//        mHeight = h;
+//        //mBackgroundGrid.setWidth(w);
+//        //mBackgroundGrid.setHeight(h);
+//        super.onSizeChanged(w, h, oldw, oldh);
+//        repaint();
+//    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -64,7 +84,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         float y = event.getY();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                currentCurve = new Curve(debug);
+                currentCurve = new CurveShape(debug);
                 curves.add(currentCurve);
                 currentCurve.touch_start(x, y);
                 repaint();
@@ -82,13 +102,19 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void clean() {
-        curves = new ArrayList<Curve>();
+        curves = new ArrayList<CurveShape>();
     }
 
     public void toggleDebug() {
         debug = !debug;
-        for(Curve curve: curves) {
+        for(CurveShape curve: curves) {
             curve.setDebug(debug);
+        }
+    }
+    private void drawBackground(Canvas canvas) {
+        canvas.drawColor(Color.WHITE);
+        if (debug) {
+            mBackgroundGrid.draw(canvas);
         }
     }
 }

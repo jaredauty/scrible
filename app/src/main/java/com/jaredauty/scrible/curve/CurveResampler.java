@@ -21,7 +21,6 @@ public class CurveResampler {
 
     public ArrayList<PointF> getOptimisedPoints(float angleThreshold) {
         double angleThresholdRads = Math.toRadians(angleThreshold);
-        Log.i("info", String.format("Threshold %.2f", angleThreshold));
         ArrayList<PointF> points = mPoints;
         // Start the round
         // Should never go more times than there are points
@@ -39,7 +38,6 @@ public class CurveResampler {
                 PointF middle = points.get(i);
                 PointF end = points.get(i + 1);
                 double angle = angleBetween2Lines(start, middle, end);
-                Log.i("info", String.format("angle %.2f", Math.toDegrees(angle)));
                 angleList[i - 1] = angle;
             }
             // Find the min angle
@@ -54,9 +52,7 @@ public class CurveResampler {
                     }
                 }
             }
-            Log.i("info", String.format("maxAngle %.2f", maxAngle));
             if(maxIndex != -1) {
-                Log.i("info", String.format("removing point %d",maxIndex));
                 points.remove(maxIndex);
             } else {
                 // Can't reduce anymore
