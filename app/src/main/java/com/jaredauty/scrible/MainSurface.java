@@ -20,6 +20,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder surfaceHolder;
     private Curve currentCurve;
     private ArrayList<Curve> curves;
+    private boolean debug;
 
     public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -63,7 +64,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         float y = event.getY();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                currentCurve = new Curve();
+                currentCurve = new Curve(debug);
                 curves.add(currentCurve);
                 currentCurve.touch_start(x, y);
                 repaint();
@@ -84,5 +85,10 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         curves = new ArrayList<Curve>();
     }
 
-
+    public void toggleDebug() {
+        debug = !debug;
+        for(Curve curve: curves) {
+            curve.setDebug(debug);
+        }
+    }
 }

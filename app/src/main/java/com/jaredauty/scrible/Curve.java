@@ -23,8 +23,13 @@ public class Curve extends Drawable {
     protected Paint curvePaint;
     private Paint debugDotPaint;
     private Path path;
-    private boolean debug;
+    private boolean mDebug;
     private ArrayList<PointF> points;
+
+    public Curve(boolean debug) {
+        this();
+        mDebug = debug;
+    }
 
     public Curve() {
         super();
@@ -41,7 +46,7 @@ public class Curve extends Drawable {
         debugDotPaint.setAntiAlias(true);
 
         path = new Path();
-        debug = false;
+        mDebug = false;
         points = new ArrayList<PointF>();
     }
     public void setAlpha(int i) {;}
@@ -51,7 +56,7 @@ public class Curve extends Drawable {
 
     public void draw(Canvas canvas) {
         canvas.drawPath(path, curvePaint);
-        if(debug) {
+        if(mDebug) {
             // Draw dots for all control points.
             for(PointF point: points) {
                 canvas.drawCircle(point.x, point.y, 10.0f, debugDotPaint);
@@ -66,6 +71,7 @@ public class Curve extends Drawable {
         path.moveTo(x, y);
         mX = x;
         mY = y;
+        points.add(new PointF(x, y));
     }
     public void touch_move(float x, float y) {
         Log.i("info", "touch_move");
@@ -82,6 +88,10 @@ public class Curve extends Drawable {
         Log.i("info", "touch_up");
         path.lineTo(mX, mY);
         rebuildCurve();
+    }
+
+    public void setDebug(boolean debug) {
+        mDebug = debug;
     }
 
     // Rebuild the curve to reduce the amount of points required.

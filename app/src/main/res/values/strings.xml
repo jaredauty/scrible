@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Scrible</string>
     <string name="clean_button">Clean</string>
+    <string name="debug_button">Debug</string>
 </resources>

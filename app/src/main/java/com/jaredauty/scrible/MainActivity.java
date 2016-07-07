@@ -8,6 +8,7 @@ import android.widget.Button;
 public class MainActivity extends Activity {
 
     private Button cleanButton;
+    private Button debugButton;
     private MainSurface mainSurface;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +21,14 @@ public class MainActivity extends Activity {
         cleanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mainSurface.clean();
+                mainSurface.repaint();
+            }
+        });
+
+        debugButton = (Button) findViewById(R.id.debugButton);
+        debugButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mainSurface.toggleDebug();
                 mainSurface.repaint();
             }
         });
