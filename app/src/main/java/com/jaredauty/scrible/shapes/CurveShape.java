@@ -26,12 +26,12 @@ public class CurveShape extends Drawable {
     private boolean mDebug;
     private ArrayList<PointF> points;
 
-    public CurveShape(boolean debug) {
-        this();
+    public CurveShape(boolean debug, PointF initialPoint) {
+        this(initialPoint);
         mDebug = debug;
     }
 
-    public CurveShape() {
+    public CurveShape(PointF initialPoint) {
         super();
         // Define paint for curve
         curvePaint = new Paint();
@@ -44,10 +44,15 @@ public class CurveShape extends Drawable {
         debugDotPaint = new Paint();
         debugDotPaint.setColor(Color.RED);
         debugDotPaint.setAntiAlias(true);
-
-        path = new Path();
         mDebug = false;
+
+        // Initialise start point
         points = new ArrayList<PointF>();
+        mX = initialPoint.x;
+        mY = initialPoint.y;
+        points.add(initialPoint);
+        path = new Path();
+        path.moveTo(initialPoint.x, initialPoint.y);
     }
     public void setAlpha(int i) {;}
     public int getAlpha() {return 255;}
@@ -66,26 +71,17 @@ public class CurveShape extends Drawable {
 
     private float mX, mY;
     private static final float TOUCH_TOLERANCE = 4;
-    public void touch_start(float x, float y) {
-        path.reset();
-        path.moveTo(x, y);
-        mX = x;
-        mY = y;
-        points.add(new PointF(x, y));
-    }
-    public void touch_move(float x, float y) {
-        Log.i("info", "touch_move");
-        float dx = Math.abs(x - mX);
-        float dy = Math.abs(y - mY);
+    public void addPoint(PointF point) {
+        float dx = Math.abs(point.x - mX);
+        float dy = Math.abs(point.y - mY);
         if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
-            path.quadTo(mX, mY, (x + mX)/2, (y + mY)/2);
-            mX = x;
-            mY = y;
-            points.add(new PointF(x, y));
+            path.quadTo(mX, mY, (point.x + mX)/2, (point.y + mY)/2);
+            mX = point.x;
+            mY = point.y;
+            points.add(point);
         }
     }
-    public void touch_up() {
-        Log.i("info", "touch_up");
+    public void finishCurve() {
         path.lineTo(mX, mY);
         rebuildCurve();
     }
