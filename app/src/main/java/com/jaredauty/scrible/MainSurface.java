@@ -90,8 +90,13 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
            case MotionEvent.ACTION_POINTER_DOWN:
                Log.i("info", "action_pointer_down");
                mCurrentPointers.add(event.getPointerId(event.getActionIndex()));
-               if(mCurrentTouchMode != TouchModes.CURVE_DRAW) {
+               if(mCurrentPointers.size() == 2) {
                    Log.i("info", "going into scene manip mode.");
+                   if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
+                       Log.i("info", "Curve drawing interrupted by multitouch.");
+                       // removing current curve.
+                       curves.remove(currentCurve);
+                   }
                    mCurrentTouchMode = TouchModes.SCENE_MANIP;
                    mSceneManipulator = new MultiTouchSceneManipulator(
                            new PointF(event.getX(mCurrentPointers.get(0)), event.getY(mCurrentPointers.get(0))),
