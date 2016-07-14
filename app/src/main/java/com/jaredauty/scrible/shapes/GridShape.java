@@ -31,6 +31,7 @@ public class GridShape extends Drawable {
         mPaint = new Paint();
         mPaint.setColor(Color.RED);
         mPaint.setStrokeWidth(1.0f);
+        mPaint.setAntiAlias(true);
     }
 
     public void setMatrix(Matrix matrix) {

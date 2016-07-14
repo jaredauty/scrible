@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.graphics.Canvas;
 import com.jaredauty.scrible.shapes.CurveShape;
 import com.jaredauty.scrible.shapes.GridShape;
 import com.jaredauty.scrible.shapes.MultiTouchSceneManipulator;
+import com.jaredauty.scrible.text.Word;
 
 /**
  * Created by Jared on 03/07/2016.
@@ -36,6 +38,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<Integer> mCurrentPointers;
     private TouchModes mCurrentTouchMode;
     private PointF mPreviousPointer;
+    private ArrayList<Word> mWords;
 
     public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -46,9 +49,19 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         mBackgroundGrid = new GridShape(50, 200, 200);
 
-        mSceneManipulator = new MultiTouchSceneManipulator(new PointF(0.0f, 0.0f),new PointF(0.0f, 0.0f));
         mCurrentTouchMode = TouchModes.NEUTRAL;
         mCurrentPointers = new ArrayList<Integer>();
+
+        mWords = new ArrayList<Word>();
+
+        mWords.add(new Word(getResources(), "In"));
+        mWords.add(new Word(getResources(), "the"));
+        mWords.add(new Word(getResources(), "beginning"));
+
+        for(int i = 0; i < 3; i++) {
+            mWords.get(i).setBounds(i*200, 0, (i+1)*200, 200);
+        }
+
         clean();
     }
 
@@ -62,6 +75,9 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
             for(CurveShape curve: curves)
             {
                 curve.draw(c);
+            }
+            for (Word word: mWords) {
+                word.draw(c);
             }
         } finally {
             if (c != null) {
@@ -168,6 +184,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void clean() {
+        mSceneManipulator = new MultiTouchSceneManipulator(new PointF(0.0f, 0.0f),new PointF(0.0f, 0.0f));
+        mSceneMatrix = new Matrix();
         curves = new ArrayList<CurveShape>();
     }
 
