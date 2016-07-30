@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.graphics.PorterDuff;
 import android.support.v4.view.MotionEventCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -17,7 +16,7 @@ import android.graphics.Canvas;
 import com.jaredauty.scrible.shapes.CurveShape;
 import com.jaredauty.scrible.shapes.GridShape;
 import com.jaredauty.scrible.shapes.MultiTouchSceneManipulator;
-import com.jaredauty.scrible.text.Word;
+import com.jaredauty.scrible.text.Text;
 
 /**
  * Created by Jared on 03/07/2016.
@@ -38,7 +37,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<Integer> mCurrentPointers;
     private TouchModes mCurrentTouchMode;
     private PointF mPreviousPointer;
-    private ArrayList<Word> mWords;
+    private Text mTestText;
 
     public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -52,15 +51,9 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         mCurrentTouchMode = TouchModes.NEUTRAL;
         mCurrentPointers = new ArrayList<Integer>();
 
-        mWords = new ArrayList<Word>();
+        mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
-        mWords.add(new Word(getResources(), "In"));
-        mWords.add(new Word(getResources(), "the"));
-        mWords.add(new Word(getResources(), "beginning"));
-
-        for(int i = 0; i < 3; i++) {
-            mWords.get(i).setBounds(i*200, 0, (i+1)*200, 200);
-        }
+        mTestText.setBounds(10, 10, 510, 510);
 
         clean();
     }
@@ -76,9 +69,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
             {
                 curve.draw(c);
             }
-            for (Word word: mWords) {
-                word.draw(c);
-            }
+            mTestText.draw(c);
         } finally {
             if (c != null) {
                 surfaceHolder.unlockCanvasAndPost(c);
@@ -194,6 +185,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         for(CurveShape curve: curves) {
             curve.setDebug(debug);
         }
+        mTestText.setDebug(debug);
     }
     private void drawBackground(Canvas canvas) {
         canvas.drawColor(Color.WHITE);

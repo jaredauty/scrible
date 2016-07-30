@@ -23,30 +23,79 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.TypedValue;
-public class TextDrawable extends Drawable {
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+
+
+public class Text extends Drawable {
     private static final int DEFAULT_COLOR = Color.BLACK;
     private static final int DEFAULT_TEXTSIZE = 15;
-    private Paint mPaint;
-    private CharSequence mText;
+    private TextPaint mPaint;
+    private String mText;
     private int mIntrinsicWidth;
     private int mIntrinsicHeight;
-    public TextDrawable(Resources res, CharSequence text) {
+    private Paint mDebugPaint;
+    private boolean mDebug;
+    private ArrayList<String> mWords;
+    private StaticLayout mLayout;
+    public Text(Resources res, String text, int width) {
         mText = text;
-        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint = new TextPaint();
         mPaint.setColor(DEFAULT_COLOR);
-        mPaint.setTextAlign(Align.CENTER);
+        mPaint.setTextAlign(Align.LEFT);
+        mPaint.setAntiAlias(true);
         float textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
                 DEFAULT_TEXTSIZE, res.getDisplayMetrics());
         mPaint.setTextSize(textSize);
+
         mIntrinsicWidth = (int) (mPaint.measureText(mText, 0, mText.length()) + .5);
         mIntrinsicHeight = mPaint.getFontMetricsInt(null);
+
+        mDebug = false;
+        mDebugPaint = new Paint();
+        mDebugPaint.setColor(Color.MAGENTA);
+        mDebugPaint.setAntiAlias(true);
+        mDebugPaint.setStrokeWidth(1.5f);
+        mDebugPaint.setStyle(Paint.Style.STROKE);
+
+        mLayout = new StaticLayout(
+                mText, mPaint,
+                width,
+                Layout.Alignment.ALIGN_NORMAL,
+                1.0f,
+                0.0f,
+                false
+        );
+
+        // To start off with lets just parse the text to find all the words.
+        // This will be replaced when we build words from the database.
+        String strings[] = mText.split(" ");
+        mWords = new ArrayList<String>();
+        for(String string: strings) {
+            mWords.add(string);
+        }
+
     }
     @Override
     public void draw(Canvas canvas) {
         Rect bounds = getBounds();
-        canvas.drawText(mText, 0, mText.length(),
-                bounds.centerX(), bounds.centerY(), mPaint);
+        canvas.save();
+        canvas.translate(bounds.left, bounds.top);
+        mLayout.draw(canvas);
+        canvas.restore();
+
+        if(mDebug) {
+            canvas.drawRect(bounds, mDebugPaint);
+            for (Rect bound: getWordBounds()) {
+                canvas.drawRect(bound, mDebugPaint);
+            }
+        }
+
     }
     @Override
     public int getOpacity() {
@@ -67,5 +116,18 @@ public class TextDrawable extends Drawable {
     @Override
     public void setColorFilter(ColorFilter filter) {
         mPaint.setColorFilter(filter);
+    }
+    public void setDebug(boolean debug) {
+        mDebug = debug;
+    }
+
+    protected ArrayList<Rect> getWordBounds() {
+        ArrayList<Rect> wordBoundaries = new ArrayList<Rect>();
+        for (int i = 0; i < mLayout.getLineCount(); i++) {
+            Rect bounds = new Rect();
+            mLayout.getLineBounds(i, bounds);
+            //wordBoundaries.add(bounds);
+        }
+        return wordBoundaries;
     }
 }
