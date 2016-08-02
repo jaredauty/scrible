@@ -1,7 +1,11 @@
 package com.jaredauty.scrible;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
@@ -13,10 +17,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.graphics.Canvas;
 
+import com.jaredauty.scrible.bible.Bible;
+import com.jaredauty.scrible.database.BibleParser;
 import com.jaredauty.scrible.shapes.CurveShape;
 import com.jaredauty.scrible.shapes.GridShape;
 import com.jaredauty.scrible.shapes.MultiTouchSceneManipulator;
 import com.jaredauty.scrible.text.Text;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * Created by Jared on 03/07/2016.
@@ -37,10 +45,13 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<Integer> mCurrentPointers;
     private TouchModes mCurrentTouchMode;
     private PointF mPreviousPointer;
+    private Bible m_bible;
     private Text mTestText;
 
-    public MainSurface(Context context, AttributeSet attrs) {
+    public MainSurface(Context context, AttributeSet attrs) throws XmlPullParserException, IOException {
         super(context, attrs);
+
+        m_bible = new Bible("ESV", getContext());
 
         mSceneMatrix = new Matrix();
         surfaceHolder = getHolder();
@@ -51,9 +62,16 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         mCurrentTouchMode = TouchModes.NEUTRAL;
         mCurrentPointers = new ArrayList<Integer>();
 
-        mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
+        //mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
+        String biblesText = "";
+        for(String bibleName: m_bible.getBookNames()) {
+            biblesText += bibleName + "\n";
+        }
+
+        mTestText = new Text(getResources(), biblesText, 510);
         mTestText.setBounds(10, 10, 510, 510);
+
 
         clean();
     }
