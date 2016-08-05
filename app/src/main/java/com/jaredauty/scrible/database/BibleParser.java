@@ -26,6 +26,11 @@ public class BibleParser {
     private static final String ns = null;
 
     public void parse(InputStream in) throws XmlPullParserException, IOException {
+        // Clear the database
+        // TODO this should only remove the current translation and accociated records
+        // This should have to rebuild the tables from scratch
+        m_dbHelper.dropTables();
+        m_dbHelper.createTables();
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -47,33 +52,70 @@ public class BibleParser {
                 continue;
             }
             String name = parser.getName();
-            Log.i("info", "Checking tag " + name);
-
             if (name.equals("b")) {
                 // Found a book
-                Log.i("info", "Found a book");
-                String bookName = readBook(parser);
-                Log.i("info", "Name is " + bookName);
-                if (bookName != "") {
-                    long bookID = m_dbHelper.insertBook(bookName, bibleID);
-                }
+                readBook(parser, bibleID);
             }
             else {
                 skip(parser);
             }
         }
+        parser.require(XmlPullParser.END_TAG, ns, "bible");
     }
 
-    protected String readBook(XmlPullParser parser) throws XmlPullParserException, IOException {
-        String bookName = new String("");
+    protected void readBook(XmlPullParser parser, long bibleID) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "b");
-        String tag = parser.getName();
-        if (tag.equals("b")) {
-            bookName = parser.getAttributeValue(null, "n");
-            parser.nextTag();
+        String bookName = parser.getAttributeValue(null, "n");
+        Log.i("info", "Found book "+ bookName);
+        long bookID = m_dbHelper.insertBook(bookName, bibleID);
+        // Search for chapters
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("c")) {
+                // Found a chapter
+                readChapter(parser, bookID);
+            }
+            else {
+                skip(parser);
+            }
         }
-        //parser.require(XmlPullParser.END_TAG, ns, "b");
-        return bookName;
+        parser.require(XmlPullParser.END_TAG, ns, "b");
+    }
+    protected void readChapter(XmlPullParser parser, long bookID) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "c");
+        String chapterNumber = parser.getAttributeValue(null, "n");
+        Log.i("info", "Found chapter "+ chapterNumber);
+        long chapterID = m_dbHelper.insertChapter(Integer.parseInt(chapterNumber), bookID);
+        // Search for chapters
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("v")) {
+                // Found a verse
+                readVerse(parser, chapterID);
+            }
+            else {
+                skip(parser);
+            }
+        }
+        parser.require(XmlPullParser.END_TAG, ns, "c");
+    }
+
+    protected void readVerse(XmlPullParser parser, long chapterID) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "v");
+        String verseNumber = parser.getAttributeValue(null, "n");
+        Log.i("info", "Found verse "+ verseNumber);
+        parser.next();
+        parser.require(XmlPullParser.TEXT, ns, null);
+        String verseText = parser.getText();
+        long verseID = m_dbHelper.insertVerse(Integer.parseInt(verseNumber), verseText, chapterID);
+        parser.next();
+        parser.require(XmlPullParser.END_TAG, ns, "v");
     }
 
     private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {

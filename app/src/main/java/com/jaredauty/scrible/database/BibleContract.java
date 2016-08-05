@@ -26,6 +26,7 @@ public final class BibleContract {
                         _ID + INT_TYPE + " PRIMARY KEY," +
                         COLUMN_NAME_TITLE + TEXT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
     /* Table for books (Genesis, leviticus etc) */
     public static abstract class BookEntry implements BaseColumns {
@@ -38,6 +39,7 @@ public final class BibleContract {
                         COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                         COLUMN_NAME_BIBLE_ID + INT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
     /* Table for chapters */
     public static abstract class ChapterEntry implements BaseColumns {
@@ -50,6 +52,7 @@ public final class BibleContract {
                         COLUMN_NAME_CHAPTER_NUM + INT_TYPE + COMMA_SEP +
                         COLUMN_NAME_BOOK_ID + INT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
     /* Table for verses */
     public static abstract class VerseEntry implements BaseColumns {
@@ -62,6 +65,7 @@ public final class BibleContract {
                         COLUMN_NAME_VERSE_NUM + INT_TYPE + COMMA_SEP +
                         COLUMN_NAME_CHAPTER_ID + INT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
     /* Table for the stem of words.*/
     public static abstract class WordStemEntry implements BaseColumns {
@@ -72,6 +76,7 @@ public final class BibleContract {
                         _ID + INT_TYPE + " PRIMARY KEY," +
                         COLUMN_NAME_CHARS + TEXT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
     /* Table for words. Note that this can also include punctuation and whitespace */
     public static abstract class WordEntry implements BaseColumns {
@@ -84,6 +89,7 @@ public final class BibleContract {
                         COLUMN_NAME_CHARS + TEXT_TYPE + COMMA_SEP +
                         COLUMN_NAME_WORDS_STEM_ID + INT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
 
     /* Table for mapping between verses and words */
@@ -99,5 +105,6 @@ public final class BibleContract {
                         COLUMN_NAME_WORD_ID + INT_TYPE + COMMA_SEP +
                         COLUMN_NAME_POSITION + INT_TYPE +
                         " )";
+        public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
 }
