@@ -61,6 +61,53 @@ public class BibleDBHelper extends SQLiteOpenHelper {
         }
         return new ArrayList<String>();
     }
+
+//    public String verseLookup(String bible, String book, int chapter, int verse) {
+//        String selectQuery =
+//    }
+
+    public long getWordID(String word) {
+        // Get the id of a particular word in the database if it exits.
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                BibleContract.WordEntry.TABLE_NAME,
+                new String[]{BibleContract.WordEntry._ID},
+                BibleContract.WordEntry.COLUMN_NAME_CHARS + " = ?",
+                new String[]{word},
+                null,
+                null,
+                null
+        );
+        if (cursor != null && cursor.moveToFirst()) {
+            int columnId = cursor.getColumnIndex(BibleContract.WordEntry._ID);
+            do {
+                return cursor.getLong(columnId);
+            } while (cursor.moveToNext());
+        }
+        return -1;
+    }
+
+    public long getStemID(String stem) {
+        // Get the id of a particular stem in the database if it exits.
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                BibleContract.WordStemEntry.TABLE_NAME,
+                new String[]{BibleContract.WordStemEntry._ID},
+                BibleContract.WordStemEntry.COLUMN_NAME_CHARS + " = ?",
+                new String[]{stem},
+                null,
+                null,
+                null
+        );
+        if (cursor != null && cursor.moveToFirst()) {
+            int columnId = cursor.getColumnIndex(BibleContract.WordStemEntry._ID);
+            do {
+                return cursor.getLong(columnId);
+            } while (cursor.moveToNext());
+        }
+        return -1;
+    }
+
     public void createTables() {
         SQLiteDatabase db = getWritableDatabase();
         createTables(db);
@@ -147,25 +194,31 @@ public class BibleDBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues stems = new ContentValues();
         // Insert stem
-        // TODO Check if the stem already exists, if it does just use the id.
         String stem = getStem(word);
-        stems.put(BibleContract.WordStemEntry.COLUMN_NAME_CHARS, stem);
-        long stemID = db.insert(
-                BibleContract.WordStemEntry.TABLE_NAME,
-                null,
-                stems
-        );
+        // Check if the stem already exists, if it does just use the id.
+        long stemID = getStemID(stem);
+        if(stemID == -1) {
+            stems.put(BibleContract.WordStemEntry.COLUMN_NAME_CHARS, stem);
+            stemID = db.insert(
+                    BibleContract.WordStemEntry.TABLE_NAME,
+                    null,
+                    stems
+            );
+        }
 
         // Insert word
-        // TODO Check if the word already exists, if it does just use the id.
-        ContentValues words = new ContentValues();
-        words.put(BibleContract.WordEntry.COLUMN_NAME_CHARS, word);
-        words.put(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID, stemID);
-        long wordID = db.insert(
-                BibleContract.WordEntry.TABLE_NAME,
-                null,
-                words
-        );
+        // Check if the word already exists, if it does just use the id.
+        long wordID = getWordID(word);
+        if(wordID == -1) {
+            ContentValues words = new ContentValues();
+            words.put(BibleContract.WordEntry.COLUMN_NAME_CHARS, word);
+            words.put(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID, stemID);
+            wordID = db.insert(
+                    BibleContract.WordEntry.TABLE_NAME,
+                    null,
+                    words
+            );
+        }
 
         // Connect word and verse
         ContentValues verseWords = new ContentValues();
@@ -182,20 +235,14 @@ public class BibleDBHelper extends SQLiteOpenHelper {
 
     protected String[] splitVerse(String verse) {
         // This regex will split the verse into a list of words, whitespace and punctuation.
-        Pattern p = Pattern.compile("(\\w*|\\W)");
-        Matcher m = p.matcher(verse);
-        List<String> tokens = new LinkedList<String>();
-        while(m.find())
-        {
-            String token = m.group( 1 ); //group 0 is always the entire match
-            tokens.add(token);
-        }
-        String [] strings = new String[tokens.size()];
-        return tokens.toArray(strings);
+        // We count single quotes as part of the word e.g. isn't or God's are both single words.
+        // Hyphens are also counted as part of the word e.g. state-of-the-art is counted as one word.
+        // TODO remove double hyphens as part of words e.g. -- is sometimes used between words.
+        return verse.split("((?<=[^\\w\\-\\'])|(?=[^\\w\\-\\']))");
     }
 
     protected String getStem(String word) {
         // Todo build the stem
-        return word;
+        return word.toLowerCase();
     }
 }
