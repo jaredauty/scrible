@@ -1,12 +1,8 @@
 package com.jaredauty.scrible.bible;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-
-import com.jaredauty.scrible.database.BibleContract;
+import android.util.Log;
 import com.jaredauty.scrible.database.BibleDBHelper;
 import com.jaredauty.scrible.database.BibleParser;
 
@@ -19,13 +15,10 @@ import java.util.ArrayList;
  * Class to handle interface to the bible.
  */
 public class Bible {
-    public Bible(String translation, Context context) throws XmlPullParserException, IOException {
+    static final boolean BUILD_FROM_XML = false;
+    public Bible(String translation, Context context) {
         m_translation = translation;
-        m_dbHelper = new BibleDBHelper(context);
-
-        BibleParser parser = new BibleParser(m_dbHelper);
-        AssetManager assetManager = context.getResources().getAssets();
-        parser.parse(assetManager.open("ESV.xml"));
+        initialiseDatabase(context);
     }
 
     public ArrayList<String> getBookNames() {
@@ -33,6 +26,30 @@ public class Bible {
     }
     public String getVerse(String bookName, int chapterNumber, int verseNumber) {
         return m_dbHelper.verseLookup(m_translation, bookName, chapterNumber, verseNumber);
+    }
+
+    public void initialiseDatabase(Context context) {
+        // TODO move this into the database helper
+        m_dbHelper = new BibleDBHelper(context);
+        if (BUILD_FROM_XML == true) {
+            BibleParser parser = new BibleParser(m_dbHelper);
+            AssetManager assetManager = context.getResources().getAssets();
+            try {
+                parser.parse(assetManager.open("ESV.xml"));
+            } catch (XmlPullParserException err){
+                Log.e("error", err.toString());
+            } catch (IOException err){
+                Log.e("error", err.toString());
+            }
+        } else {
+            try {
+                m_dbHelper.createDataBase();
+            } catch (IOException err) {
+                Log.e("error", err.toString());
+            }
+        }
+
+
     }
 
     private String m_translation;

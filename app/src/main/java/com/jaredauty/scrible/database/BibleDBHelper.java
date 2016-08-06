@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
@@ -12,13 +13,11 @@ import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.util.Version;
 
-
-import com.jaredauty.scrible.bible.Bible;
-import com.jaredauty.scrible.database.BibleContract;
-
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,11 +29,14 @@ public class BibleDBHelper extends SQLiteOpenHelper {
     // If you change the database schema, you must increment the database version.
     public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "scrible.db";
+    private static String DB_PATH = "/data/data/com.jaredauty.scrible/databases/";
+    protected Context m_context;
 
     protected static final Pattern STEM_DISCARD_PATTERN = Pattern.compile("^\\w*$");
 
     public BibleDBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.m_context = context;
     }
     public void onCreate(SQLiteDatabase db) {
         createTables(db);
@@ -144,6 +146,60 @@ public class BibleDBHelper extends SQLiteOpenHelper {
     public void dropTables() {
         SQLiteDatabase db = getWritableDatabase();
         dropTables(db);
+    }
+
+    public void createDataBase() throws IOException {
+        boolean dbExist = checkDataBase();
+        if (dbExist) {
+            //do nothing - database already exist
+        } else {
+            //By calling this method and empty database will be created into the default system path
+            //of your application so we are gonna be able to overwrite that database with our database.
+            this.getReadableDatabase();
+            try {
+                copyDataBase();
+            } catch (IOException e) {
+                throw new Error("Error copying database");
+            }
+        }
+    }
+
+    private boolean checkDataBase(){
+        SQLiteDatabase checkDB = null;
+        try{
+            String myPath = DB_PATH + DATABASE_NAME;
+            checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+        }catch(SQLiteException e){
+            //database does't exist yet.
+        }
+        if(checkDB != null){
+            checkDB.close();
+        }
+        return checkDB != null ? true : false;
+    }
+
+    private void copyDataBase() throws IOException {
+
+        //Open your local db as the input stream
+        InputStream myInput = m_context.getAssets().open(DATABASE_NAME);
+
+        // Path to the just created empty db
+        String outFileName = DB_PATH + DATABASE_NAME;
+
+        //Open the empty db as the output stream
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        //transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
+        }
+        //Close the streams
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
     }
 
     public void dropTables(SQLiteDatabase db) {
@@ -290,7 +346,6 @@ public class BibleDBHelper extends SQLiteOpenHelper {
 
     protected String getStem(String word) {
         // Check that the word just contains letters, otherwise don't bother stemming.
-
         Matcher m = STEM_DISCARD_PATTERN.matcher(word);
         if(!m.find()){
             Log.i("info", "Skipping stemming for '" + word + "' since it contains un-stemmable characters.");

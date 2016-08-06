@@ -1,14 +1,11 @@
 package com.jaredauty.scrible.database;
 
-import android.content.Context;
 import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
