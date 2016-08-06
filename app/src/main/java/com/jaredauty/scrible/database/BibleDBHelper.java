@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.jaredauty.scrible.bible.Bible;
+
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -64,6 +66,40 @@ public class BibleDBHelper extends SQLiteOpenHelper {
             return books;
         }
         return new ArrayList<String>();
+    }
+
+    public ArrayList<Integer> getChapters(String bibleName, String bookName) {
+        SQLiteDatabase db = getReadableDatabase();
+        Log.i("info", BibleContract.SQL_CHAPTERS_QUERY);
+        Cursor cursor = db.rawQuery(
+                BibleContract.SQL_CHAPTERS_QUERY,
+                new String[]{bibleName, bookName}
+        );
+        ArrayList<Integer> chapters = new ArrayList<Integer>();
+        if (cursor != null && cursor.moveToFirst()) {
+            int columnId = cursor.getColumnIndex(BibleContract.ChapterEntry.COLUMN_NAME_CHAPTER_NUM);
+            do {
+                chapters.add(cursor.getInt(columnId));
+            } while (cursor.moveToNext());
+        }
+        return chapters;
+    }
+
+    public ArrayList<Integer> getVerses(String bibleName, String bookName, int chapterNumber) {
+        SQLiteDatabase db = getReadableDatabase();
+        Log.i("info", BibleContract.SQL_VERSES_QUERY);
+        Cursor cursor = db.rawQuery(
+                BibleContract.SQL_VERSES_QUERY,
+                new String[]{bibleName, bookName, Integer.toString(chapterNumber)}
+        );
+        ArrayList<Integer> chapters = new ArrayList<Integer>();
+        if (cursor != null && cursor.moveToFirst()) {
+            int columnId = cursor.getColumnIndex(BibleContract.VerseEntry.COLUMN_NAME_VERSE_NUM);
+            do {
+                chapters.add(cursor.getInt(columnId));
+            } while (cursor.moveToNext());
+        }
+        return chapters;
     }
 
     public String verseLookup(String bible, String book, int chapter, int verse) {

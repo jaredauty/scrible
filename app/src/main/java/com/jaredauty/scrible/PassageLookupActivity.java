@@ -8,6 +8,8 @@ import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
 
+import com.jaredauty.scrible.bible.Bible;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,10 +25,12 @@ public class PassageLookupActivity extends Activity{
     private HashMap<String, List<Integer>> listDataChild;
     private String selectedBook;
     private Integer selectedChapter;
+    private Bible m_bible;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_passage_lookup);
+        m_bible = new Bible("ESV", getApplicationContext());
 
         expListView = (ExpandableListView) findViewById(R.id.expandableListView);
 
@@ -57,22 +61,16 @@ public class PassageLookupActivity extends Activity{
     protected void prepareListData() {
         listDataHeader = new ArrayList<String>();
         listDataChild = new HashMap<String, List<Integer>>();
-        listDataHeader.add("Genesis");
-        listDataHeader.add("Exodus");
-
-        List<Integer> chapters = new ArrayList<Integer>();
-        for(int i= 0; i < 40; i++) {
-            chapters.add(i);
+        for (String bookName: m_bible.getBookNames()) {
+            listDataHeader.add(bookName);
+            listDataChild.put(bookName, m_bible.getChapterNumbers(bookName));
         }
-        listDataChild.put("Genesis", chapters);
-        listDataChild.put("Exodus", chapters);
     }
 
     protected void doneButton () {
-        // TODO Get passage
-        String passage = selectedBook + " chapter " + selectedChapter.toString();
         Intent output = new Intent();
-        output.putExtra(MainActivity.PASSAGE_EXTRA, passage);
+        output.putExtra(MainActivity.BOOK_EXTRA, selectedBook);
+        output.putExtra(MainActivity.CHAPTER_EXTRA, selectedChapter);
         setResult(RESULT_OK, output);
         finish();
     }

@@ -92,8 +92,19 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
-    public void setPassageText(String passageText) {
-        mTestText = new Text(getResources(), passageText);
+    public void setPassage(String book, int chapterNum) {
+        String htmlText = generatePageHTML(book, chapterNum);
+        mTestText = new Text(getResources(), htmlText);
+        repaint();
+    }
+
+    protected String generatePageHTML(String book, int chapterNum) {
+        String htmlText = new String("<h1>" + book + " - " + Integer.toString(chapterNum) + "</h1>");
+        for (Integer verseNumber: m_bible.getVerses(book, chapterNum)) {
+            htmlText += "<sup>" + verseNumber.toString() + "</sup>" +
+                    m_bible.getVerse(book, chapterNum, verseNumber);
+        }
+        return htmlText;
     }
 
     public void surfaceCreated(SurfaceHolder holder) {

@@ -24,7 +24,9 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.DynamicLayout;
+import android.text.Html;
 import android.text.Layout;
+import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.TypedValue;
@@ -37,16 +39,15 @@ public class Text extends Drawable {
     private static final int DEFAULT_COLOR = Color.BLACK;
     private static final int DEFAULT_TEXTSIZE = 15;
     private TextPaint mPaint;
-    private String mText;
+    private Spanned mTextHTML;
     private int mIntrinsicWidth;
     private int mIntrinsicHeight;
     private Paint mDebugPaint;
     private boolean mDebug;
     private int mWidth;
     private StaticLayout mLayout;
-    private ArrayList<String> mWords;
     public Text(Resources res, String text) {
-        mText = text;
+        mTextHTML = Html.fromHtml(text, null, null);
         mWidth = 0;
         mPaint = new TextPaint();
         mPaint.setColor(DEFAULT_COLOR);
@@ -56,11 +57,12 @@ public class Text extends Drawable {
                 DEFAULT_TEXTSIZE, res.getDisplayMetrics());
         mPaint.setTextSize(textSize);
 
-        mIntrinsicWidth = (int) (mPaint.measureText(mText, 0, mText.length()) + .5);
+        // TODO This needs to be updated to use correct spanned data.
+        mIntrinsicWidth = (int) (mPaint.measureText(text, 0, text.length()) + .5);
         mIntrinsicHeight = mPaint.getFontMetricsInt(null);
 
         mLayout = new StaticLayout(
-                mText, mPaint,
+                mTextHTML, mPaint,
                 mWidth,
                 Layout.Alignment.ALIGN_NORMAL,
                 1.0f,
@@ -74,22 +76,13 @@ public class Text extends Drawable {
         mDebugPaint.setAntiAlias(true);
         mDebugPaint.setStrokeWidth(1.5f);
         mDebugPaint.setStyle(Paint.Style.STROKE);
-
-        // To start off with lets just parse the text to find all the words.
-        // This will be replaced when we build words from the database.
-        String strings[] = mText.split(" ");
-        mWords = new ArrayList<String>();
-        for(String string: strings) {
-            mWords.add(string);
-        }
-
     }
 
     @Override
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, bottom);
         mLayout = new StaticLayout(
-                mText, mPaint,
+                mTextHTML, mPaint,
                 right - left,
                 Layout.Alignment.ALIGN_NORMAL,
                 1.0f,

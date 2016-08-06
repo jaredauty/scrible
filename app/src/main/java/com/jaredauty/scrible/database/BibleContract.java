@@ -2,6 +2,8 @@ package com.jaredauty.scrible.database;
 
 import android.provider.BaseColumns;
 
+import com.jaredauty.scrible.bible.Bible;
+
 /**
  * Created by Jared on 30/07/2016.
  */
@@ -162,4 +164,30 @@ public final class BibleContract {
             " = " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry._ID +
             " WHERE " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry.COLUMN_NAME_TITLE +
             " = ?";
+
+    public static final String SQL_CHAPTERS_QUERY = "SELECT " + ChapterEntry.TABLE_NAME + "." + ChapterEntry.COLUMN_NAME_CHAPTER_NUM +
+            " FROM " + ChapterEntry.TABLE_NAME +
+            " JOIN " + BookEntry.TABLE_NAME +
+            " ON " + ChapterEntry.TABLE_NAME + "." + ChapterEntry.COLUMN_NAME_BOOK_ID +
+            " = " + BookEntry.TABLE_NAME + "." + BookEntry._ID +
+            " JOIN " + BibleEntry.TABLE_NAME +
+            " ON " + BookEntry.TABLE_NAME + "." + BookEntry.COLUMN_NAME_BIBLE_ID +
+            " = " + BibleEntry.TABLE_NAME + "." + BibleEntry._ID +
+            " WHERE " + BibleEntry.TABLE_NAME + "." + BibleEntry.COLUMN_NAME_TITLE + " = ?" +
+            " AND " + BookEntry.TABLE_NAME + "." + BookEntry.COLUMN_NAME_TITLE + " = ?";
+
+    public static final String SQL_VERSES_QUERY = "SELECT " + VerseEntry.TABLE_NAME + "." + VerseEntry.COLUMN_NAME_VERSE_NUM +
+            " FROM " + VerseEntry.TABLE_NAME +
+            " JOIN " + ChapterEntry.TABLE_NAME +
+            " ON " + VerseEntry.TABLE_NAME + "." + VerseEntry.COLUMN_NAME_CHAPTER_ID +
+            " = " + ChapterEntry.TABLE_NAME + "." + ChapterEntry._ID +
+            " JOIN " + BookEntry.TABLE_NAME +
+            " ON " + ChapterEntry.TABLE_NAME + "." + ChapterEntry.COLUMN_NAME_BOOK_ID +
+            " = " + BookEntry.TABLE_NAME + "." + BookEntry._ID +
+            " JOIN " + BibleEntry.TABLE_NAME +
+            " ON " + BookEntry.TABLE_NAME + "." + BookEntry.COLUMN_NAME_BIBLE_ID +
+            " = " + BibleEntry.TABLE_NAME + "." + BibleEntry._ID +
+            " WHERE " + BibleEntry.TABLE_NAME + "." + BibleEntry.COLUMN_NAME_TITLE + " = ?" +
+            " AND " + BookEntry.TABLE_NAME + "." + BookEntry.COLUMN_NAME_TITLE + " = ?" +
+            " AND " + ChapterEntry.TABLE_NAME + "." + ChapterEntry.COLUMN_NAME_CHAPTER_NUM + " = ?";
 }

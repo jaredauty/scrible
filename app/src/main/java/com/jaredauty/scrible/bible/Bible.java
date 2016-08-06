@@ -24,6 +24,13 @@ public class Bible {
     public ArrayList<String> getBookNames() {
         return m_dbHelper.getBookNames(m_translation);
     }
+    public ArrayList<Integer> getChapterNumbers(String bookName) {
+        return m_dbHelper.getChapters(m_translation, bookName);
+    }
+    public ArrayList<Integer> getVerses(String bookName, int chapterNumber) {
+        return m_dbHelper.getVerses(m_translation, bookName, chapterNumber);
+    }
+
     public String getVerse(String bookName, int chapterNumber, int verseNumber) {
         return m_dbHelper.verseLookup(m_translation, bookName, chapterNumber, verseNumber);
     }

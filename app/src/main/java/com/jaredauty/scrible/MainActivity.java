@@ -9,7 +9,8 @@ import android.widget.Button;
 
 public class MainActivity extends Activity {
 
-    public static final String PASSAGE_EXTRA = "passage_extra";
+    public static final String BOOK_EXTRA = "book_extra";
+    public static final String CHAPTER_EXTRA = "chapter_extra";
     public static final int PASSAGE_REQUEST_CODE = 1;
 
     private Button cleanButton;
@@ -49,15 +50,16 @@ public class MainActivity extends Activity {
     protected void openPassageLookup() {
         Log.i("info", "pressed the lookup button");
         Intent intent = new Intent(this, PassageLookupActivity.class);
+        // TODO figure out a way to send the bible object we're using over to the lookup activity.
         startActivityForResult(intent, PASSAGE_REQUEST_CODE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PASSAGE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            String passage = data.getStringExtra(PASSAGE_EXTRA);
-            mainSurface.setPassageText(passage);
-            mainSurface.repaint();
+            String book = data.getStringExtra(BOOK_EXTRA);
+            int chapter = data.getIntExtra(CHAPTER_EXTRA, 1);
+            mainSurface.setPassage(book, chapter);
         }
     }
 }
