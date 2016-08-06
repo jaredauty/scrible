@@ -40,6 +40,7 @@ public class BibleParser {
         } finally {
             in.close();
         }
+        m_dbHelper.updateWordStems();
     }
 
     protected  void readBible(XmlPullParser parser) throws XmlPullParserException, IOException {

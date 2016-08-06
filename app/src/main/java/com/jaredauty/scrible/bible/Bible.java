@@ -31,6 +31,9 @@ public class Bible {
     public ArrayList<String> getBookNames() {
         return m_dbHelper.getBookNames(m_translation);
     }
+    public String getVerse(String bookName, int chapterNumber, int verseNumber) {
+        return m_dbHelper.verseLookup(m_translation, bookName, chapterNumber, verseNumber);
+    }
 
     private String m_translation;
     private BibleDBHelper m_dbHelper;

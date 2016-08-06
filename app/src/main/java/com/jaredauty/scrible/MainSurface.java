@@ -64,11 +64,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         //mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
-        String biblesText = "";
-        for(String bibleName: m_bible.getBookNames()) {
-            biblesText += bibleName + "\n";
-        }
-
+        String biblesText = m_bible.getVerse("Genesis", 1, 5);
         mTestText = new Text(getResources(), biblesText, 510);
         mTestText.setBounds(10, 10, 510, 510);
 

@@ -107,4 +107,59 @@ public final class BibleContract {
                         " )";
         public  static final String SQL_DROP_TABLE = DROP_TABLE + TABLE_NAME;
     }
+    /*
+       Example:
+       SELECT words.chars
+       FROM verses
+       JOIN chapters
+       ON verses.chapterID = chapters._ID
+       JOIN books
+       ON chapters.bookID = books._ID
+       JOIN bibles
+       ON books.bibleID = bibles._ID
+       JOIN versesWords
+       ON verses._ID = versesWords.verseID
+       JOIN words
+       ON versesWords.wordID = words._ID
+       WHERE bibles.title = "ESV" AND books.title = "Genesis" AND chapters.chapterNumber = 2 AND verses.verseNum = 1
+       ORDER BY versesWords.position
+   */
+    public static final String SQL_VERSE_QUERY = "SELECT " + BibleContract.WordEntry.TABLE_NAME + "." + BibleContract.WordEntry.COLUMN_NAME_CHARS +
+            " FROM " + BibleContract.VerseEntry.TABLE_NAME +
+            " JOIN " + BibleContract.ChapterEntry.TABLE_NAME +
+            " ON " + BibleContract.VerseEntry.TABLE_NAME + "." + BibleContract.VerseEntry.COLUMN_NAME_CHAPTER_ID + " = " +
+            BibleContract.ChapterEntry.TABLE_NAME + "." + BibleContract.ChapterEntry._ID +
+            " JOIN " + BibleContract.BookEntry.TABLE_NAME +
+            " ON " + BibleContract.ChapterEntry.TABLE_NAME + "." + BibleContract.ChapterEntry.COLUMN_NAME_BOOK_ID + " = " +
+            BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry._ID +
+            " JOIN " + BibleContract.BibleEntry.TABLE_NAME +
+            " ON " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_BIBLE_ID + " = " +
+            BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry._ID +
+            " JOIN " + BibleContract.VerseWordEntry.TABLE_NAME +
+            " ON " + BibleContract.VerseEntry.TABLE_NAME + "." + BibleContract.VerseEntry._ID + " = " +
+            BibleContract.VerseWordEntry.TABLE_NAME + "." + BibleContract.VerseWordEntry.COLUMN_NAME_VERSE_ID +
+            " JOIN " + BibleContract.WordEntry.TABLE_NAME +
+            " ON " + BibleContract.VerseWordEntry.TABLE_NAME + "." + BibleContract.VerseWordEntry.COLUMN_NAME_WORD_ID + " = " +
+            BibleContract.WordEntry.TABLE_NAME + "." + BibleContract.WordEntry._ID +
+            " WHERE " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry.COLUMN_NAME_TITLE + " = ?" +
+            " AND " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_TITLE + " = ?" +
+            " AND " + BibleContract.ChapterEntry.TABLE_NAME + "." + BibleContract.ChapterEntry.COLUMN_NAME_CHAPTER_NUM + " = ?" +
+            " AND " + BibleContract.VerseEntry.TABLE_NAME + "." + BibleContract.VerseEntry.COLUMN_NAME_VERSE_NUM + " = ?" +
+            " ORDER BY " + BibleContract.VerseWordEntry.TABLE_NAME + "." + BibleContract.VerseWordEntry.COLUMN_NAME_POSITION;
+
+    /*
+       Example:
+       SELECT books.title
+       FROM books
+       JOIN bibles
+       ON books.bibleID = bibles._ID
+       WHERE bibles.title = "ESV"
+   */
+    public static final String SQL_BOOK_NAMES_QUERY = "SELECT " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_TITLE +
+            " FROM " + BibleContract.BookEntry.TABLE_NAME +
+            " JOIN " + BibleContract.BibleEntry.TABLE_NAME +
+            " ON " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_BIBLE_ID +
+            " = " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry._ID +
+            " WHERE " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry.COLUMN_NAME_TITLE +
+            " = ?";
 }

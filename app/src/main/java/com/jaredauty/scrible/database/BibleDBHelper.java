@@ -7,6 +7,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.util.Version;
+
+
 import com.jaredauty.scrible.bible.Bible;
 import com.jaredauty.scrible.database.BibleContract;
 
@@ -25,6 +31,8 @@ public class BibleDBHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "scrible.db";
 
+    protected static final Pattern STEM_DISCARD_PATTERN = Pattern.compile("^\\w*$");
+
     public BibleDBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -42,19 +50,13 @@ public class BibleDBHelper extends SQLiteOpenHelper {
 
     public ArrayList<String> getBookNames(String bibleName) {
         SQLiteDatabase db = getReadableDatabase();
-        String selectQuery = "SELECT " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_TITLE + " FROM " +
-                BibleContract.BookEntry.TABLE_NAME + " JOIN " + BibleContract.BibleEntry.TABLE_NAME +
-                " ON " + BibleContract.BookEntry.TABLE_NAME + "." + BibleContract.BookEntry.COLUMN_NAME_BIBLE_ID +
-                " = " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry._ID +
-                " WHERE " + BibleContract.BibleEntry.TABLE_NAME + "." + BibleContract.BibleEntry.COLUMN_NAME_TITLE +
-                " = ?";
-        Cursor cursor = db.rawQuery(selectQuery, new String [] {bibleName});
+        Cursor cursor = db.rawQuery(BibleContract.SQL_BOOK_NAMES_QUERY, new String [] {bibleName});
 
         if (cursor != null && cursor.moveToFirst()) {
             ArrayList<String> books =  new ArrayList<String>();
-            int columId = cursor.getColumnIndex(BibleContract.BookEntry.COLUMN_NAME_TITLE);
+            int columnId = cursor.getColumnIndex(BibleContract.BookEntry.COLUMN_NAME_TITLE);
             do {
-                String bookName = cursor.getString(columId);
+                String bookName = cursor.getString(columnId);
                 books.add(bookName);
             } while (cursor.moveToNext());
             return books;
@@ -62,9 +64,25 @@ public class BibleDBHelper extends SQLiteOpenHelper {
         return new ArrayList<String>();
     }
 
-//    public String verseLookup(String bible, String book, int chapter, int verse) {
-//        String selectQuery =
-//    }
+    public String verseLookup(String bible, String book, int chapter, int verse) {
+
+        // Build selection query only once and then reuse.
+        Log.i("info", BibleContract.SQL_VERSE_QUERY);
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                BibleContract.SQL_VERSE_QUERY,
+                new String[]{bible, book, Integer.toString(chapter), Integer.toString(verse)}
+        );
+        String verseText = new String();
+        if (cursor != null && cursor.moveToFirst()) {
+            int columnId = cursor.getColumnIndex(BibleContract.WordEntry.COLUMN_NAME_CHARS);
+            do {
+                verseText += cursor.getString(columnId);
+            } while (cursor.moveToNext());
+            return verseText;
+        }
+        return null;
+    }
 
     public long getWordID(String word) {
         // Get the id of a particular word in the database if it exits.
@@ -189,30 +207,60 @@ public class BibleDBHelper extends SQLiteOpenHelper {
         }
         return verseID;
     }
+    public void updateWordStems() {
+        SQLiteDatabase db = getWritableDatabase();
+        // Get all words
+        Cursor wordsCursor = db.query(
+                BibleContract.WordEntry.TABLE_NAME,
+                new String[]{BibleContract.WordEntry.COLUMN_NAME_CHARS, BibleContract.WordEntry._ID},
+                null, null, null, null, null
+        );
+        if (wordsCursor != null && wordsCursor.moveToFirst()) {
+            int wordIDColumn = wordsCursor.getColumnIndex(BibleContract.WordEntry._ID);
+            int charColumn = wordsCursor.getColumnIndex(BibleContract.WordEntry.COLUMN_NAME_CHARS);
+            int stemColumn = wordsCursor.getColumnIndex(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID);
+
+            do {
+                // TODO find out whether the stem field has already been set.
+                //if (wordsCursor.getLong(stemColumn))
+                // Do the stemming
+                String word = wordsCursor.getString(charColumn);
+
+                String stem = getStem(word);
+                if (stem != "") {
+                    Log.i("info", "Using '" + stem + "' as stem for '" + word + "'");
+                    // Insert stem into database if it's not already there.
+                    long stemID = getStemID(stem);
+                    if (stemID == -1){
+                        // Insert in stem
+                        ContentValues stems = new ContentValues();
+                        stems.put(BibleContract.WordStemEntry.COLUMN_NAME_CHARS, stem);
+                        stemID = db.insert(
+                                BibleContract.WordStemEntry.TABLE_NAME,
+                                null,
+                                stems
+                        );
+
+                        // Update stem in word
+                        long wordID = wordsCursor.getLong(wordIDColumn);
+                        ContentValues words = new ContentValues();
+                        words.put(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID, stemID);
+                        db.update(BibleContract.WordEntry.TABLE_NAME, words, "_id = ?", new String[]{Long.toString(wordID)});
+                    }
+                }
+            } while (wordsCursor.moveToNext());
+        }
+    }
 
     protected long insertWord(String word, long verseID, int position) {
         SQLiteDatabase db = getWritableDatabase();
-        ContentValues stems = new ContentValues();
-        // Insert stem
-        String stem = getStem(word);
-        // Check if the stem already exists, if it does just use the id.
-        long stemID = getStemID(stem);
-        if(stemID == -1) {
-            stems.put(BibleContract.WordStemEntry.COLUMN_NAME_CHARS, stem);
-            stemID = db.insert(
-                    BibleContract.WordStemEntry.TABLE_NAME,
-                    null,
-                    stems
-            );
-        }
-
         // Insert word
         // Check if the word already exists, if it does just use the id.
         long wordID = getWordID(word);
         if(wordID == -1) {
             ContentValues words = new ContentValues();
             words.put(BibleContract.WordEntry.COLUMN_NAME_CHARS, word);
-            words.put(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID, stemID);
+            //words.put(BibleContract.WordEntry.COLUMN_NAME_WORDS_STEM_ID, stemID);
             wordID = db.insert(
                     BibleContract.WordEntry.TABLE_NAME,
                     null,
@@ -236,13 +284,25 @@ public class BibleDBHelper extends SQLiteOpenHelper {
     protected String[] splitVerse(String verse) {
         // This regex will split the verse into a list of words, whitespace and punctuation.
         // We count single quotes as part of the word e.g. isn't or God's are both single words.
-        // Hyphens are also counted as part of the word e.g. state-of-the-art is counted as one word.
-        // TODO remove double hyphens as part of words e.g. -- is sometimes used between words.
-        return verse.split("((?<=[^\\w\\-\\'])|(?=[^\\w\\-\\']))");
+        //
+        return verse.split("((?<=[^\\w\\\'])|(?=[^\\w\\\']))");
     }
 
     protected String getStem(String word) {
-        // Todo build the stem
-        return word.toLowerCase();
+        // Check that the word just contains letters, otherwise don't bother stemming.
+
+        Matcher m = STEM_DISCARD_PATTERN.matcher(word);
+        if(!m.find()){
+            Log.i("info", "Skipping stemming for '" + word + "' since it contains un-stemmable characters.");
+            return word;
+        }
+        EnglishAnalyzer en_an = new EnglishAnalyzer(Version.LUCENE_34);
+        QueryParser parser = new QueryParser(Version.LUCENE_34, "", en_an);
+        try{
+            return parser.parse(word.toLowerCase()).toString();
+        } catch (ParseException err) {
+            Log.e("error", "Failed to stem '" + word + "' got: " + err.toString());
+        }
+        return word;
     }
 }
