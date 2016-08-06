@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.support.v4.view.MotionEventCompat;
+import android.text.StaticLayout;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -47,6 +48,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private PointF mPreviousPointer;
     private Bible m_bible;
     private Text mTestText;
+    private String mPageText;
 
     public MainSurface(Context context, AttributeSet attrs) throws XmlPullParserException, IOException {
         super(context, attrs);
@@ -64,10 +66,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         //mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
-        String biblesText = m_bible.getVerse("Genesis", 1, 5);
-        mTestText = new Text(getResources(), biblesText, 510);
-        mTestText.setBounds(10, 10, 510, 510);
-
+        mPageText = m_bible.getVerse("Genesis", 1, 5);
+        mTestText = new Text(getResources(), mPageText);
 
         clean();
     }
@@ -93,6 +93,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
 
     public void surfaceCreated(SurfaceHolder holder) {
+        mTestText.setBounds(0, 0, getWidth(), getHeight());
         repaint();
     }
 
@@ -100,8 +101,12 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        Log.i("info", "Setting width and height.");
         mBackgroundGrid.setWidth(w);
         mBackgroundGrid.setHeight(h);
+        mTestText.setBounds(0, 0, w, h);
+        mWidth = w;
+        mHeight = h;
     }
     private static final float CURVEDRAW_TOLERANCE = 10;
     @Override

@@ -23,6 +23,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.DynamicLayout;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -41,10 +42,12 @@ public class Text extends Drawable {
     private int mIntrinsicHeight;
     private Paint mDebugPaint;
     private boolean mDebug;
-    private ArrayList<String> mWords;
+    private int mWidth;
     private StaticLayout mLayout;
-    public Text(Resources res, String text, int width) {
+    private ArrayList<String> mWords;
+    public Text(Resources res, String text) {
         mText = text;
+        mWidth = 0;
         mPaint = new TextPaint();
         mPaint.setColor(DEFAULT_COLOR);
         mPaint.setTextAlign(Align.LEFT);
@@ -56,21 +59,21 @@ public class Text extends Drawable {
         mIntrinsicWidth = (int) (mPaint.measureText(mText, 0, mText.length()) + .5);
         mIntrinsicHeight = mPaint.getFontMetricsInt(null);
 
+        mLayout = new StaticLayout(
+                mText, mPaint,
+                mWidth,
+                Layout.Alignment.ALIGN_NORMAL,
+                1.0f,
+                0.0f,
+                false
+        );
+
         mDebug = false;
         mDebugPaint = new Paint();
         mDebugPaint.setColor(Color.MAGENTA);
         mDebugPaint.setAntiAlias(true);
         mDebugPaint.setStrokeWidth(1.5f);
         mDebugPaint.setStyle(Paint.Style.STROKE);
-
-        mLayout = new StaticLayout(
-                mText, mPaint,
-                width,
-                Layout.Alignment.ALIGN_NORMAL,
-                1.0f,
-                0.0f,
-                false
-        );
 
         // To start off with lets just parse the text to find all the words.
         // This will be replaced when we build words from the database.
@@ -81,13 +84,27 @@ public class Text extends Drawable {
         }
 
     }
+
+    @Override
+    public void setBounds(int left, int top, int right, int bottom) {
+        super.setBounds(left, top, right, bottom);
+        mLayout = new StaticLayout(
+                mText, mPaint,
+                right - left,
+                Layout.Alignment.ALIGN_NORMAL,
+                1.0f,
+                0.0f,
+                false
+        );
+    }
+
     @Override
     public void draw(Canvas canvas) {
         Rect bounds = getBounds();
         canvas.save();
         canvas.translate(bounds.left, bounds.top);
-        mLayout.draw(canvas);
         canvas.restore();
+        mLayout.draw(canvas);
 
         if(mDebug) {
             canvas.drawRect(bounds, mDebugPaint);
