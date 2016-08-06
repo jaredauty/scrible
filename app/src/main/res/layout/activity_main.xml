@@ -24,6 +24,12 @@
             android:layout_width="0dp"
             android:layout_weight="1"/>
         <Button
+            android:text="@string/lookup_button"
+            android:id="@+id/lookupButton"
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"/>
+        <Button
             android:text="@string/debug_button"
             android:id="@+id/debugButton"
             android:layout_height="match_parent"

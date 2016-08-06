@@ -48,7 +48,6 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private PointF mPreviousPointer;
     private Bible m_bible;
     private Text mTestText;
-    private String mPageText;
 
     public MainSurface(Context context, AttributeSet attrs) throws XmlPullParserException, IOException {
         super(context, attrs);
@@ -66,8 +65,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         //mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
-        mPageText = m_bible.getVerse("Genesis", 1, 5);
-        mTestText = new Text(getResources(), mPageText);
+       // mPageText = m_bible.getVerse("Genesis", 1, 5);
+        mTestText = new Text(getResources(), "No passage selected yet.");
 
         clean();
     }
@@ -76,14 +75,16 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         Canvas c = null;
         try {
             c = surfaceHolder.lockCanvas();
-            c.setMatrix(mSceneMatrix);
-            drawBackground(c);
-            // Draw curves
-            for(CurveShape curve: curves)
-            {
-                curve.draw(c);
+            if (c != null) {
+                c.setMatrix(mSceneMatrix);
+                drawBackground(c);
+                // Draw curves
+                for(CurveShape curve: curves)
+                {
+                    curve.draw(c);
+                }
+                mTestText.draw(c);
             }
-            mTestText.draw(c);
         } finally {
             if (c != null) {
                 surfaceHolder.unlockCanvasAndPost(c);
@@ -91,6 +92,9 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    public void setPassageText(String passageText) {
+        mTestText = new Text(getResources(), passageText);
+    }
 
     public void surfaceCreated(SurfaceHolder holder) {
         mTestText.setBounds(0, 0, getWidth(), getHeight());
