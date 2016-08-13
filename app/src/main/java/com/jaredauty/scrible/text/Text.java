@@ -37,7 +37,7 @@ import java.util.ArrayList;
 
 public class Text extends Drawable {
     private static final int DEFAULT_COLOR = Color.BLACK;
-    private static final int DEFAULT_TEXTSIZE = 15;
+    private static final int DEFAULT_TEXTSIZE = 20;
     private TextPaint mPaint;
     private Spanned mTextHTML;
     private int mIntrinsicWidth;
@@ -45,7 +45,7 @@ public class Text extends Drawable {
     private Paint mDebugPaint;
     private boolean mDebug;
     private int mWidth;
-    private StaticLayout mLayout;
+    private DynamicLayout mLayout;
     public Text(Resources res, String text) {
         mTextHTML = Html.fromHtml(text, null, null);
         mWidth = 0;
@@ -61,14 +61,7 @@ public class Text extends Drawable {
         mIntrinsicWidth = (int) (mPaint.measureText(text, 0, text.length()) + .5);
         mIntrinsicHeight = mPaint.getFontMetricsInt(null);
 
-        mLayout = new StaticLayout(
-                mTextHTML, mPaint,
-                mWidth,
-                Layout.Alignment.ALIGN_NORMAL,
-                1.0f,
-                0.0f,
-                false
-        );
+        updateLayout();
 
         mDebug = false;
         mDebugPaint = new Paint();
@@ -78,17 +71,16 @@ public class Text extends Drawable {
         mDebugPaint.setStyle(Paint.Style.STROKE);
     }
 
+    public void setHtmlText(String htmlText) {
+        mTextHTML = Html.fromHtml(htmlText, null, null);
+        updateLayout();
+    }
+
     @Override
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, bottom);
-        mLayout = new StaticLayout(
-                mTextHTML, mPaint,
-                right - left,
-                Layout.Alignment.ALIGN_NORMAL,
-                1.0f,
-                0.0f,
-                false
-        );
+        mWidth = right - left;
+        updateLayout();
     }
 
     @Override
@@ -136,8 +128,19 @@ public class Text extends Drawable {
         for (int i = 0; i < mLayout.getLineCount(); i++) {
             Rect bounds = new Rect();
             mLayout.getLineBounds(i, bounds);
-            //wordBoundaries.add(bounds);
+            wordBoundaries.add(bounds);
         }
         return wordBoundaries;
+    }
+
+    protected void updateLayout() {
+        mLayout = new DynamicLayout(
+                mTextHTML, mPaint,
+                mWidth,
+                Layout.Alignment.ALIGN_NORMAL,
+                1.0f,
+                0.0f,
+                false
+        );
     }
 }

@@ -6,11 +6,11 @@
     android:orientation="vertical"
     tools:context="com.jaredauty.scrible.MainActivity">
 
-    <com.jaredauty.scrible.MainSurface
-        android:id="@+id/surfaceView"
+    <fragment android:name="com.jaredauty.scrible.SurfaceFragment"
+        android:id="@+id/surfaceFragment"
+        android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="0pt"
-        android:layout_weight="1"/>
+        android:layout_height="match_parent" />
 
     <LinearLayout
         android:layout_width="match_parent"

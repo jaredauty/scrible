@@ -36,7 +36,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
     private SurfaceHolder surfaceHolder;
     private CurveShape currentCurve;
-    private ArrayList<CurveShape> curves;
+    //private ArrayList<CurveShape> curves;
     private boolean debug;
     private int mWidth;
     private int mHeight;
@@ -46,14 +46,20 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<Integer> mCurrentPointers;
     private TouchModes mCurrentTouchMode;
     private PointF mPreviousPointer;
-    private Bible m_bible;
-    private Text mTestText;
+    //private Text mTestText;
+    private Page mPage;
 
-    public MainSurface(Context context, AttributeSet attrs) throws XmlPullParserException, IOException {
+    public MainSurface(Context context) {
+        super(context);
+        initialise();
+    }
+
+    public MainSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
+        initialise();
+    }
 
-        m_bible = new Bible("ESV", getContext());
-
+    protected void initialise(){
         mSceneMatrix = new Matrix();
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
@@ -65,8 +71,9 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         //mTestText = new Text(getResources(), "In the beginning...\nAmen.", 510);
 
-       // mPageText = m_bible.getVerse("Genesis", 1, 5);
-        mTestText = new Text(getResources(), "No passage selected yet.");
+        // mPageText = m_bible.getVerse("Genesis", 1, 5);
+        //mTestText = new Text(getResources(), "No passage selected yet.");
+        mPage = new Page(getResources());
 
         clean();
     }
@@ -78,12 +85,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
             if (c != null) {
                 c.setMatrix(mSceneMatrix);
                 drawBackground(c);
-                // Draw curves
-                for(CurveShape curve: curves)
-                {
-                    curve.draw(c);
-                }
-                mTestText.draw(c);
+                mPage.draw(c);
             }
         } finally {
             if (c != null) {
@@ -93,22 +95,15 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void setPassage(String book, int chapterNum) {
-        String htmlText = generatePageHTML(book, chapterNum);
-        mTestText = new Text(getResources(), htmlText);
-        repaint();
+        mPage.setBookTitle(book, chapterNum);
     }
 
-    protected String generatePageHTML(String book, int chapterNum) {
-        String htmlText = new String("<h1>" + book + " - " + Integer.toString(chapterNum) + "</h1>");
-        for (Integer verseNumber: m_bible.getVerses(book, chapterNum)) {
-            htmlText += "<sup>" + verseNumber.toString() + "</sup>" +
-                    m_bible.getVerse(book, chapterNum, verseNumber);
-        }
-        return htmlText;
+    public void addVerse(String verse) {
+        mPage.addVerse(verse);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
-        mTestText.setBounds(0, 0, getWidth(), getHeight());
+        mPage.setTextBounds(0, 0, getWidth(), getHeight());
         repaint();
     }
 
@@ -119,7 +114,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         Log.i("info", "Setting width and height.");
         mBackgroundGrid.setWidth(w);
         mBackgroundGrid.setHeight(h);
-        mTestText.setBounds(0, 0, w, h);
+        mPage.setTextBounds(0, 0, w, h);
         mWidth = w;
         mHeight = h;
     }
@@ -136,7 +131,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
                    if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
                        Log.i("info", "Curve drawing interrupted by multitouch.");
                        // removing current curve.
-                       curves.remove(currentCurve);
+                       mPage.removeCurve(currentCurve);
                    }
                    mCurrentTouchMode = TouchModes.SCENE_MANIP;
                    mSceneManipulator = new MultiTouchSceneManipulator(
@@ -183,7 +178,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
                         mCurrentTouchMode = TouchModes.CURVE_DRAW;
                         // Create a current curve
                         currentCurve = new CurveShape(debug, screenToWorldPoint(event.getX(), event.getY()));
-                        curves.add(currentCurve);
+                        mPage.addCurve(currentCurve);
                     }
                 }
                 switch (mCurrentTouchMode) {
@@ -211,15 +206,16 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     public void clean() {
         mSceneManipulator = new MultiTouchSceneManipulator(new PointF(0.0f, 0.0f),new PointF(0.0f, 0.0f));
         mSceneMatrix = new Matrix();
-        curves = new ArrayList<CurveShape>();
+        mPage.cleanCurves();
+    }
+
+    public void cleanVerses() {
+        mPage.cleanVerses();
     }
 
     public void toggleDebug() {
         debug = !debug;
-        for(CurveShape curve: curves) {
-            curve.setDebug(debug);
-        }
-        mTestText.setDebug(debug);
+        mPage.setDebug(debug);
     }
     private void drawBackground(Canvas canvas) {
         canvas.drawColor(Color.WHITE);

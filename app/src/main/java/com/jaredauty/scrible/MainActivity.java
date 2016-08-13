@@ -2,10 +2,17 @@ package com.jaredauty.scrible;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import com.jaredauty.scrible.bible.Bible;
+import com.jaredauty.scrible.bible.BibleReference;
+
+import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 public class MainActivity extends Activity {
 
@@ -16,19 +23,22 @@ public class MainActivity extends Activity {
     private Button cleanButton;
     private Button debugButton;
     private Button lookupButton;
-    private MainSurface mainSurface;
+    private Bible m_bible;
+    private ArrayList<LoadVerseTask> m_verseLoadTasks;
+    //private MainSurface mainSurface;
+    private SurfaceFragment m_surfaceFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mainSurface = (MainSurface) findViewById(R.id.surfaceView);
+        m_bible = new Bible("ESV", getApplicationContext());
+        m_verseLoadTasks = new ArrayList<LoadVerseTask>();
+        m_surfaceFragment = (SurfaceFragment) getFragmentManager().findFragmentById(R.id.surfaceFragment);
 
         cleanButton = (Button) findViewById(R.id.cleanButton);
         cleanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mainSurface.clean();
-                mainSurface.repaint();
+                m_surfaceFragment.clean();
             }
         });
 
@@ -42,8 +52,7 @@ public class MainActivity extends Activity {
         debugButton = (Button) findViewById(R.id.debugButton);
         debugButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mainSurface.toggleDebug();
-                mainSurface.repaint();
+                m_surfaceFragment.toggleDebug();
             }
         });
     }
@@ -59,7 +68,41 @@ public class MainActivity extends Activity {
         if (requestCode == PASSAGE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             String book = data.getStringExtra(BOOK_EXTRA);
             int chapter = data.getIntExtra(CHAPTER_EXTRA, 1);
-            mainSurface.setPassage(book, chapter);
+            m_surfaceFragment.setPassage(book, chapter);
+            loadVerses(book, chapter);
         }
+    }
+
+    protected void loadVerses(String book, int chapter) {
+        // Start off the asychronous verse loads.
+        m_surfaceFragment.cleanVerses();
+        // Make sure any previous loads are cancelled.
+        for(LoadVerseTask loadTask: m_verseLoadTasks) {
+            loadTask.cancel(true);
+        }
+        for(Integer verseNumber: m_bible.getVerses(book, chapter)) {
+            BibleReference reference = new BibleReference(book, chapter, verseNumber);
+            LoadVerseTask loadVerseTask = new LoadVerseTask(m_bible, m_surfaceFragment);
+            m_verseLoadTasks.add(loadVerseTask);
+            loadVerseTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, reference);
+        }
+    }
+}
+
+class LoadVerseTask extends AsyncTask<BibleReference, Void, String > {
+    protected Bible m_bible;
+    protected SurfaceFragment m_fragment;
+    public LoadVerseTask(Bible bible, SurfaceFragment fragment) {
+        super();
+        m_bible = bible;
+        m_fragment = fragment;
+    }
+    @Override
+    protected String doInBackground(BibleReference... bibleReferences) {
+        return m_bible.getVerse(bibleReferences[0]);
+    }
+
+    protected void onPostExecute(String result) {
+        m_fragment.addVerse(result);
     }
 }
