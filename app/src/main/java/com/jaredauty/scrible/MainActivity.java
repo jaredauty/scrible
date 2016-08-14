@@ -12,6 +12,7 @@ import com.jaredauty.scrible.bible.Bible;
 import com.jaredauty.scrible.bible.BibleReference;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public class MainActivity extends Activity {
@@ -55,6 +56,9 @@ public class MainActivity extends Activity {
                 m_surfaceFragment.toggleDebug();
             }
         });
+
+        // Start at the very beginning
+        loadVerses("Genesis", 1);
     }
     protected void openPassageLookup() {
         Log.i("info", "pressed the lookup button");
@@ -68,7 +72,6 @@ public class MainActivity extends Activity {
         if (requestCode == PASSAGE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             String book = data.getStringExtra(BOOK_EXTRA);
             int chapter = data.getIntExtra(CHAPTER_EXTRA, 1);
-            m_surfaceFragment.setPassage(book, chapter);
             loadVerses(book, chapter);
         }
     }
@@ -76,20 +79,37 @@ public class MainActivity extends Activity {
     protected void loadVerses(String book, int chapter) {
         // Start off the asychronous verse loads.
         m_surfaceFragment.cleanVerses();
+        m_surfaceFragment.setPassage(book, chapter);
         // Make sure any previous loads are cancelled.
         for(LoadVerseTask loadTask: m_verseLoadTasks) {
             loadTask.cancel(true);
         }
-        for(Integer verseNumber: m_bible.getVerses(book, chapter)) {
+        m_verseLoadTasks.clear();
+        // We chunk the verses so that the main ui doesn't get caught up processing all
+        // the results.
+        ArrayList<Integer> verses = m_bible.getVerses(book, chapter);
+        int maxChunkSize = 2;
+        int currentChunkSize = 0;
+        ArrayList<BibleReference> references = new ArrayList<BibleReference>();
+        for(Integer verseNumber: verses) {
             BibleReference reference = new BibleReference(book, chapter, verseNumber);
-            LoadVerseTask loadVerseTask = new LoadVerseTask(m_bible, m_surfaceFragment);
-            m_verseLoadTasks.add(loadVerseTask);
-            loadVerseTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, reference);
+            references.add(reference);
+            if(currentChunkSize >= maxChunkSize) {
+                LoadVerseTask currentTask = new LoadVerseTask(m_bible, m_surfaceFragment);
+                m_verseLoadTasks.add(currentTask);
+                currentTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, references);
+                references = new ArrayList<BibleReference>();
+                currentChunkSize = 0;
+                // Increase the chunk size for ones lower down since we don't see them immediately.
+                maxChunkSize *=4;
+            } else {
+                currentChunkSize++;
+            }
         }
     }
 }
 
-class LoadVerseTask extends AsyncTask<BibleReference, Void, String > {
+class LoadVerseTask extends AsyncTask<Object, Void, ArrayList<String> > {
     protected Bible m_bible;
     protected SurfaceFragment m_fragment;
     public LoadVerseTask(Bible bible, SurfaceFragment fragment) {
@@ -98,11 +118,16 @@ class LoadVerseTask extends AsyncTask<BibleReference, Void, String > {
         m_fragment = fragment;
     }
     @Override
-    protected String doInBackground(BibleReference... bibleReferences) {
-        return m_bible.getVerse(bibleReferences[0]);
+    protected ArrayList<String> doInBackground(Object... params) {
+        List<BibleReference> bibleReferences = (List<BibleReference>) params[0];
+        ArrayList<String> verses = new ArrayList<String>();
+        for(BibleReference reference: bibleReferences) {
+            verses.add(m_bible.getVerse(reference));
+        }
+        return verses;
     }
 
-    protected void onPostExecute(String result) {
-        m_fragment.addVerse(result);
+    protected void onPostExecute(ArrayList<String> result) {
+        m_fragment.addVerses(result);
     }
 }

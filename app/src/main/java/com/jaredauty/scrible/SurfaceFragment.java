@@ -7,6 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Jared on 8/13/2016.
  */
@@ -40,8 +43,8 @@ public class SurfaceFragment extends Fragment {
         m_surface.repaint();
     }
 
-    public void addVerse(String verse) {
-        m_surface.addVerse(verse);
+    public void addVerses(List<String> verses) {
+        m_surface.addVerses(verses);
         m_surface.repaint();
     }
     public void cleanVerses() {

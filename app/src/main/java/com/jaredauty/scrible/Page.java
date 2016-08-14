@@ -2,12 +2,14 @@ package com.jaredauty.scrible;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.util.Log;
 
 import com.jaredauty.scrible.shapes.CurveShape;
 import com.jaredauty.scrible.text.Text;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jared on 8/13/2016.
@@ -19,16 +21,21 @@ public class Page {
     String m_bookTitle;
     int m_chapterNumber;
     private int mEdgeOffset;
+    private boolean mHtmlDirty;
 
     public Page(Resources resources) {
-        mEdgeOffset = 10;
+        mEdgeOffset = 70;
         m_text = new Text(resources, "");
         m_curves = new ArrayList<CurveShape>();
         m_bookTitle = new String("");
         m_verses = new ArrayList<String>();
+        mHtmlDirty = true;
     }
 
     public void draw(Canvas canvas){
+        if(mHtmlDirty){
+            refreshPageHtml();
+        }
         m_text.draw(canvas);
         for(CurveShape curve: m_curves) {
             curve.draw(canvas);
@@ -52,12 +59,13 @@ public class Page {
 
     public void cleanVerses() {
         m_verses.clear();
-        refreshPageHtml();
+        mHtmlDirty = true;
     }
 
-    public void addVerse(String verse) {
-        m_verses.add(verse);
-        refreshPageHtml();
+    public void addVerses(List<String> verses) {
+        Log.i("info", "Updating verses with " + verses.toString());
+        m_verses.addAll(verses);
+        mHtmlDirty = true;
     }
 
     public void setDebug(boolean debug){
@@ -70,14 +78,18 @@ public class Page {
     public void setBookTitle(String bookTitle, int chapterNumber) {
         m_bookTitle = bookTitle;
         m_chapterNumber = chapterNumber;
-        refreshPageHtml();
+        mHtmlDirty = true;
     }
 
     protected void refreshPageHtml() {
         String htmlText = new String("<h1>" + m_bookTitle + " " + Integer.toString(m_chapterNumber) + "</h1>");
+        int verseNumber = 1;
         for (String verse: m_verses) {
-            htmlText += "<sup>" + verse + "</sup>";
+            htmlText += "<sup><small><small>" + verseNumber + "</small></small></sup>";
+            htmlText += verse + " ";
+            verseNumber++;
         }
         m_text.setHtmlText(htmlText);
+        mHtmlDirty = false;
     }
 }

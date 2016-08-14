@@ -3,6 +3,7 @@ package com.jaredauty.scrible;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -20,6 +21,8 @@ import android.graphics.Canvas;
 
 import com.jaredauty.scrible.bible.Bible;
 import com.jaredauty.scrible.database.BibleParser;
+import com.jaredauty.scrible.gestures.ScaleGestures;
+import com.jaredauty.scrible.gestures.ScrollGestures;
 import com.jaredauty.scrible.shapes.CurveShape;
 import com.jaredauty.scrible.shapes.GridShape;
 import com.jaredauty.scrible.shapes.MultiTouchSceneManipulator;
@@ -48,6 +51,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private PointF mPreviousPointer;
     //private Text mTestText;
     private Page mPage;
+    private ScaleGestures mScaleGestures;
+    private ScrollGestures mScrollGestures;
 
     public MainSurface(Context context) {
         super(context);
@@ -63,6 +68,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         mSceneMatrix = new Matrix();
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
+        mScaleGestures = new ScaleGestures(getContext());
+        mScrollGestures = new ScrollGestures(getContext());
 
         mBackgroundGrid = new GridShape(50, 200, 200);
 
@@ -98,8 +105,8 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         mPage.setBookTitle(book, chapterNum);
     }
 
-    public void addVerse(String verse) {
-        mPage.addVerse(verse);
+    public void addVerses(List<String> verses) {
+        mPage.addVerses(verses);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -121,87 +128,98 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     private static final float CURVEDRAW_TOLERANCE = 10;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        final int action = MotionEventCompat.getActionMasked(event);
-        switch (action) {
-           case MotionEvent.ACTION_POINTER_DOWN:
-               Log.i("info", "action_pointer_down");
-               mCurrentPointers.add(event.getPointerId(event.getActionIndex()));
-               if(mCurrentPointers.size() == 2) {
-                   Log.i("info", "going into scene manip mode.");
-                   if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
-                       Log.i("info", "Curve drawing interrupted by multitouch.");
-                       // removing current curve.
-                       mPage.removeCurve(currentCurve);
-                   }
-                   mCurrentTouchMode = TouchModes.SCENE_MANIP;
-                   mSceneManipulator = new MultiTouchSceneManipulator(
-                           new PointF(event.getX(mCurrentPointers.get(0)), event.getY(mCurrentPointers.get(0))),
-                           new PointF(event.getX(mCurrentPointers.get(1)), event.getY(mCurrentPointers.get(1)))
-                   );
-               }
-               repaint();
-               break;
-           case MotionEvent.ACTION_POINTER_UP:
-               Log.i("info", "action_pointer_up");
-               mCurrentPointers.remove(event.getPointerId(event.getActionIndex()));
-               if(mCurrentPointers.size() < 2) {
-                   Log.i("info", "going out of scene manip mode");
-                   mCurrentTouchMode = TouchModes.NEUTRAL;
-               }
-               repaint();
-               break;
-            case MotionEvent.ACTION_DOWN:
-                Log.i("info", "action_down");
-                Log.i("info", "start monitoring for curve draw");
-                mCurrentTouchMode = TouchModes.MONITORING;
-                mPreviousPointer = screenToWorldPoint(event.getX(), event.getY());
-                mCurrentPointers.add(event.getPointerId(event.getActionIndex()));
-                repaint();
-                break;
-            case MotionEvent.ACTION_UP:
-                Log.i("info", "action_up");
-                Log.i("info", "turning off monitoring and going back to neutral");
-                if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
-                    currentCurve.finishCurve();
-                }
-                mCurrentTouchMode = TouchModes.NEUTRAL;
-                mCurrentPointers.clear();
-                repaint();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                Log.i("info", "action_move");
-                if (mCurrentTouchMode == TouchModes.MONITORING) {
-                    float dx = Math.abs(event.getX() - mPreviousPointer.x);
-                    float dy = Math.abs(event.getY() - mPreviousPointer.y);
-                    if (dx >= CURVEDRAW_TOLERANCE || dy >= CURVEDRAW_TOLERANCE) {
-                        Log.i("info", "changing to draw mode.");
-                        mCurrentTouchMode = TouchModes.CURVE_DRAW;
-                        // Create a current curve
-                        currentCurve = new CurveShape(debug, screenToWorldPoint(event.getX(), event.getY()));
-                        mPage.addCurve(currentCurve);
-                    }
-                }
-                switch (mCurrentTouchMode) {
-                    case CURVE_DRAW:
-                        PointF point = screenToWorldPoint(event.getX(), event.getY());
-                        currentCurve.addPoint(point);
-                        break;
-                    case SCENE_MANIP:
-                        PointF point1 = new PointF(event.getX(mCurrentPointers.get(0)), event.getY(mCurrentPointers.get(0)));
-                        PointF point2 = new PointF(event.getX(mCurrentPointers.get(1)), event.getY(mCurrentPointers.get(1)));
-                        mSceneManipulator.setPoint1(point1);
-                        mSceneManipulator.setPoint2(point2);
-                        Matrix sceneOffset = mSceneManipulator.getMatrix();
-                        Log.i("info", "generated scene offset.");
-                        mSceneMatrix.postConcat(sceneOffset);
-                        Log.i("info", "updated scene matrix.");
-                        break;
-                }
-                repaint();
-                break;
-        }
+        //mScaleGestures.onTouch(this, event);
+        mScrollGestures.onTouch(this, event);
         return true;
     }
+
+    public void setViewportMatrix(Matrix matrix) {
+        mSceneMatrix = matrix;
+        repaint();
+    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        final int action = MotionEventCompat.getActionMasked(event);
+//        switch (action) {
+//           case MotionEvent.ACTION_POINTER_DOWN:
+//               Log.i("info", "action_pointer_down");
+//               mCurrentPointers.add(event.getPointerId(event.getActionIndex()));
+//               if(mCurrentPointers.size() == 2) {
+//                   Log.i("info", "going into scene manip mode.");
+//                   if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
+//                       Log.i("info", "Curve drawing interrupted by multitouch.");
+//                       // removing current curve.
+//                       mPage.removeCurve(currentCurve);
+//                   }
+//                   mCurrentTouchMode = TouchModes.SCENE_MANIP;
+//                   mSceneManipulator = new MultiTouchSceneManipulator(
+//                           new PointF(event.getX(mCurrentPointers.get(0)), event.getY(mCurrentPointers.get(0))),
+//                           new PointF(event.getX(mCurrentPointers.get(1)), event.getY(mCurrentPointers.get(1)))
+//                   );
+//               }
+//               repaint();
+//               break;
+//           case MotionEvent.ACTION_POINTER_UP:
+//               Log.i("info", "action_pointer_up");
+//               mCurrentPointers.remove(event.getPointerId(event.getActionIndex()));
+//               if(mCurrentPointers.size() < 2) {
+//                   Log.i("info", "going out of scene manip mode");
+//                   mCurrentTouchMode = TouchModes.NEUTRAL;
+//               }
+//               repaint();
+//               break;
+//            case MotionEvent.ACTION_DOWN:
+//                Log.i("info", "action_down");
+//                Log.i("info", "start monitoring for curve draw");
+//                mCurrentTouchMode = TouchModes.MONITORING;
+//                mPreviousPointer = screenToWorldPoint(event.getX(), event.getY());
+//                mCurrentPointers.add(event.getPointerId(event.getActionIndex()));
+//                repaint();
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                Log.i("info", "action_up");
+//                Log.i("info", "turning off monitoring and going back to neutral");
+//                if (mCurrentTouchMode == TouchModes.CURVE_DRAW) {
+//                    currentCurve.finishCurve();
+//                }
+//                mCurrentTouchMode = TouchModes.NEUTRAL;
+//                mCurrentPointers.clear();
+//                repaint();
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                Log.i("info", "action_move");
+//                if (mCurrentTouchMode == TouchModes.MONITORING) {
+//                    float dx = Math.abs(event.getX() - mPreviousPointer.x);
+//                    float dy = Math.abs(event.getY() - mPreviousPointer.y);
+//                    if (dx >= CURVEDRAW_TOLERANCE || dy >= CURVEDRAW_TOLERANCE) {
+//                        Log.i("info", "changing to draw mode.");
+//                        mCurrentTouchMode = TouchModes.CURVE_DRAW;
+//                        // Create a current curve
+//                        currentCurve = new CurveShape(debug, screenToWorldPoint(event.getX(), event.getY()));
+//                        mPage.addCurve(currentCurve);
+//                    }
+//                }
+//                switch (mCurrentTouchMode) {
+//                    case CURVE_DRAW:
+//                        PointF point = screenToWorldPoint(event.getX(), event.getY());
+//                        currentCurve.addPoint(point);
+//                        break;
+//                    case SCENE_MANIP:
+//                        PointF point1 = new PointF(event.getX(mCurrentPointers.get(0)), event.getY(mCurrentPointers.get(0)));
+//                        PointF point2 = new PointF(event.getX(mCurrentPointers.get(1)), event.getY(mCurrentPointers.get(1)));
+//                        mSceneManipulator.setPoint1(point1);
+//                        mSceneManipulator.setPoint2(point2);
+//                        Matrix sceneOffset = mSceneManipulator.getMatrix();
+//                        Log.i("info", "generated scene offset.");
+//                        mSceneMatrix.postConcat(sceneOffset);
+//                        Log.i("info", "updated scene matrix.");
+//                        break;
+//                }
+//                repaint();
+//                break;
+//        }
+//        return true;
+//    }
 
     public void clean() {
         mSceneManipulator = new MultiTouchSceneManipulator(new PointF(0.0f, 0.0f),new PointF(0.0f, 0.0f));

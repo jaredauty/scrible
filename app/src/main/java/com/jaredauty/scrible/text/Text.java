@@ -37,7 +37,7 @@ import java.util.ArrayList;
 
 public class Text extends Drawable {
     private static final int DEFAULT_COLOR = Color.BLACK;
-    private static final int DEFAULT_TEXTSIZE = 20;
+    private static final int DEFAULT_TEXTSIZE = 17;
     private TextPaint mPaint;
     private Spanned mTextHTML;
     private int mIntrinsicWidth;
@@ -88,15 +88,17 @@ public class Text extends Drawable {
         Rect bounds = getBounds();
         canvas.save();
         canvas.translate(bounds.left, bounds.top);
-        canvas.restore();
         mLayout.draw(canvas);
-
         if(mDebug) {
-            canvas.drawRect(bounds, mDebugPaint);
             for (Rect bound: getWordBounds()) {
                 canvas.drawRect(bound, mDebugPaint);
             }
         }
+        canvas.restore();
+        if (mDebug) {
+            canvas.drawRect(bounds, mDebugPaint);
+        }
+
 
     }
     @Override
@@ -140,7 +142,7 @@ public class Text extends Drawable {
                 Layout.Alignment.ALIGN_NORMAL,
                 1.0f,
                 0.0f,
-                false
+                true
         );
     }
 }
