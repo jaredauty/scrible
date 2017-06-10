@@ -43,7 +43,7 @@ public class SurfaceFragment extends Fragment {
         m_surface.repaint();
     }
 
-    public void addVerses(List<String> verses) {
+    public void addVerses(ArrayList<String> verses) {
         m_surface.addVerses(verses);
         m_surface.repaint();
     }

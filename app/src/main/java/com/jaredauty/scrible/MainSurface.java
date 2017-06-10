@@ -80,7 +80,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
         // mPageText = m_bible.getVerse("Genesis", 1, 5);
         //mTestText = new Text(getResources(), "No passage selected yet.");
-        mPage = new Page(getResources());
+        mPage = new Page(getContext());
 
         clean();
     }
@@ -92,6 +92,10 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
             if (c != null) {
                 c.setMatrix(mSceneMatrix);
                 drawBackground(c);
+
+                if (debug) {
+                    mBackgroundGrid.draw(c);
+                }
                 mPage.draw(c);
             }
         } finally {
@@ -105,7 +109,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
         mPage.setBookTitle(book, chapterNum);
     }
 
-    public void addVerses(List<String> verses) {
+    public void addVerses(ArrayList<String> verses) {
         mPage.addVerses(verses);
     }
 
@@ -119,6 +123,7 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         Log.i("info", "Setting width and height.");
+        // Calculate the correct height given the
         mBackgroundGrid.setWidth(w);
         mBackgroundGrid.setHeight(h);
         mPage.setTextBounds(0, 0, w, h);
@@ -237,9 +242,6 @@ public class MainSurface extends SurfaceView implements SurfaceHolder.Callback {
     }
     private void drawBackground(Canvas canvas) {
         canvas.drawColor(Color.WHITE);
-        if (debug) {
-            mBackgroundGrid.draw(canvas);
-        }
     }
     private PointF screenToWorldPoint(float x, float y) {
         float point[] = new float[2];
